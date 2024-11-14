@@ -1,0 +1,64 @@
+import pandas as pd
+
+# Sample data creation (for demonstration)
+data = {
+    'empid': ['E001', 'E001', 'E001', 'E002', 'E003', 'E003', 'E004'],
+    'userId': ['U1001', 'U1002', 'U1003', 'U2001', 'U3001', 'U3002', 'U4001'],
+    'status': ['active', 'inactive', 'terminated', 'active', 'active', 'inactive', 'active']
+}
+df = pd.DataFrame(data)
+
+def filter_multiple_status_employees(df):
+    """
+    Filter employees who have multiple userIDs with different statuses.
+    
+    Parameters:
+    df (pandas.DataFrame): DataFrame with columns 'empid', 'userId', 'status'
+    
+    Returns:
+    pandas.DataFrame: Filtered DataFrame showing only employees with multiple statuses
+    """
+    # Count unique statuses per employee
+    status_counts = df.groupby('empid')['status'].nunique()
+    
+    # Find employees with multiple userIDs
+    user_counts = df.groupby('empid')['userId'].count()
+    
+    # Identify employees with both multiple userIDs and different statuses
+    target_employees = status_counts[
+        (status_counts > 1) & (user_counts > 1)
+    ].index
+    
+    # Filter the original dataframe
+    filtered_df = df[df['empid'].isin(target_employees)]
+    
+    return filtered_df
+
+# Apply the filter
+result = filter_multiple_status_employees(df)
+
+# Optional: Add summary information
+def get_status_summary(df):
+    """
+    Create a summary of status combinations per employee
+    """
+    summary = df.groupby('empid').agg({
+        'userId': 'count',
+        'status': lambda x: ', '.join(sorted(set(x)))
+    }).rename(columns={
+        'userId': 'number_of_userIds',
+        'status': 'status_combinations'
+    })
+    return summary
+
+summary = get_status_summary(result)
+
+# Print results
+print("\nEmployees with multiple userIDs and different statuses:")
+print(result)
+print("\nSummary:")
+print(summary)
+
+# Optional: Export to Excel
+# result.to_excel('multiple_status_employees.xlsx', index=False)
+# summary.to_excel('status_summary.xlsx')
